@@ -93,6 +93,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="board.cpp" />
+    <ClCompile Include="gameobserver.cpp" />
+    <ClCompile Include="gamestate.cpp" />
     <ClCompile Include="ship.cpp" />
     <QtRcc Include="SeaBattleKursovai.qrc" />
     <QtUic Include="SeaBattleKursovai.ui" />
@@ -104,6 +106,8 @@
   <ItemGroup>
     <ClInclude Include="board.h" />
     <ClInclude Include="cell.h" />
+    <QtMoc Include="gameobserver.h" />
+    <QtMoc Include="gamestate.h" />
     <ClInclude Include="ship.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

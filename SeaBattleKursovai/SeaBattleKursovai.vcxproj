@@ -92,9 +92,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="aiplayer.cpp" />
     <ClCompile Include="board.cpp" />
+    <ClCompile Include="game.cpp" />
+    <ClCompile Include="gamefactory.cpp" />
     <ClCompile Include="gameobserver.cpp" />
     <ClCompile Include="gamestate.cpp" />
+    <ClCompile Include="humanplayer.cpp" />
+    <ClCompile Include="player.cpp" />
     <ClCompile Include="ship.cpp" />
     <QtRcc Include="SeaBattleKursovai.qrc" />
     <QtUic Include="SeaBattleKursovai.ui" />
@@ -104,8 +109,13 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <QtMoc Include="aiplayer.h" />
     <ClInclude Include="board.h" />
     <ClInclude Include="cell.h" />
+    <QtMoc Include="game.h" />
+    <ClInclude Include="gamefactory.h" />
+    <QtMoc Include="humanplayer.h" />
+    <QtMoc Include="player.h" />
     <QtMoc Include="gameobserver.h" />
     <QtMoc Include="gamestate.h" />
     <ClInclude Include="ship.h" />

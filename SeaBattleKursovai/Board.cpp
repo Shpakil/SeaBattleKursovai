@@ -56,3 +56,12 @@ const std::vector<std::vector<Cell>>& Board::getGrid() const
 {
     return grid;
 }
+
+std::vector<std::vector<int>> Board::getStateGrid() const
+{
+    std::vector<std::vector<int>> state(grid.size(), std::vector<int>(grid[0].size(), 0));
+    for (size_t i = 0; i < grid.size(); ++i)
+        for (size_t j = 0; j < grid[i].size(); ++j)
+            state[i][j] = static_cast<int>(grid[i][j].getState());
+    return state;
+}

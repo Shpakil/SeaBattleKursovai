@@ -6,7 +6,7 @@
 class ComputerPlayer : public Player
 {
 public:
-    ComputerPlayer(const std::string& n = "Компьютер");
+    ComputerPlayer(const std::string& n = "Computer");
 
     // Автоматическая расстановка кораблей
     void placeShips() override;

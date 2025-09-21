@@ -14,7 +14,8 @@ public:
     GameLogic(Player* p1, Player* p2);
 
     void startGame();        // Инициализация игры
-    void makeTurn();         // Сделать один ход
+    // GameLogic.cpp
+    bool makeTurn(int row, int col);
     bool isGameOver() const; // Проверка окончания
     Player* getWinner() const; // Кто победил
 };

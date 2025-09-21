@@ -93,27 +93,29 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Board.cpp" />
+    <ClCompile Include="BoardWidget.cpp" />
     <ClCompile Include="ComputerPlayer.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GameLogic.cpp" />
+    <ClCompile Include="GameWindow.cpp" />
     <ClCompile Include="HumanPlayer.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Ship.cpp" />
     <QtRcc Include="SeaBattleKursovai.qrc" />
     <QtUic Include="SeaBattleKursovai.ui" />
     <ClCompile Include="Cell.cpp" />
-    <ClCompile Include="SeaBattleKursovai.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Board.h" />
+    <QtMoc Include="BoardWidget.h" />
     <ClInclude Include="Cell.h" />
     <ClInclude Include="ComputerPlayer.h" />
     <QtMoc Include="Game.h" />
     <ClInclude Include="GameLogic.h" />
+    <QtMoc Include="GameWindow.h" />
     <ClInclude Include="HumanPlayer.h" />
     <ClInclude Include="Player.h" />
-    <ClInclude Include="SeaBattleKursovai.h" />
     <ClInclude Include="Ship.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

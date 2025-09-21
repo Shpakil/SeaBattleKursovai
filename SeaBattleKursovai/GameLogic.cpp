@@ -18,37 +18,18 @@ void GameLogic::startGame()
     std::cout << "Корабли расставлены, начинаем бой!" << std::endl;
 }
 
-// Сделать ход
-void GameLogic::makeTurn()
+// GameLogic.cpp
+bool GameLogic::makeTurn(int row, int col)
 {
-    // 1. Текущий игрок выбирает координаты
-    std::pair<int, int> move = current->makeMove();
-    int row = move.first;
-    int col = move.second;
+    if (isGameOver())
+        return false;
 
-    // 2. Выполняем выстрел по полю соперника
     bool hit = opponent->getBoard().shootAt(row, col);
 
-    // 3. Сообщаем результат
-    if (hit)
-    {
-        std::cout << current->getName() << " попал в (" << row << ", " << col << ")!" << std::endl;
-    }
-    else
-    {
-        std::cout << current->getName() << " промахнулся в (" << row << ", " << col << ")." << std::endl;
-    }
-
-    // 4. Проверяем, не закончилась ли игра
-    if (opponent->getBoard().allShipsSunk())
-    {
-        std::cout << ">>> " << current->getName() << " выиграл!" << std::endl;
-        return;
-    }
-
-    // 5. Если промахнулся — меняем игрока
     if (!hit)
         std::swap(current, opponent);
+
+    return hit;
 }
 
 // Проверка конца игры

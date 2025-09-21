@@ -8,7 +8,7 @@ HumanPlayer::HumanPlayer(const std::string& n)
 
 void HumanPlayer::placeShips()
 {
-    std::cout << "Игрок " << name << ", разместите свои корабли." << std::endl;
+    //std::cout << "Игрок " << name << ", разместите свои корабли." << std::endl;
     // В будущем — реализация через UI
 }
 

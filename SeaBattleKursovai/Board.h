@@ -28,6 +28,9 @@ public:
 
     // Получить сетку (для UI)
     const std::vector<std::vector<Cell>>& getGrid() const;
+
+    std::vector<std::vector<int>> getStateGrid() const;
+
 };
 
 

@@ -1,5 +1,6 @@
 #include "Board.h"
 
+
 // Конструктор
 Board::Board(int r, int c)
     : rows(r), cols(c)

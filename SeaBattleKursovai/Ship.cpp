@@ -1,6 +1,5 @@
 #include "Ship.h"
 
-
 Ship::Ship(const std::vector<Cell*>& shipCells)
     : cells(shipCells)
 {

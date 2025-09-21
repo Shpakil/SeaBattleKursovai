@@ -6,6 +6,7 @@
 class Player
 {
 protected:
+
     std::string name;   // имя игрока
     Board board;    // игровое поле игрока
 

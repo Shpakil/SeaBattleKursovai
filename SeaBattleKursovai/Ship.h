@@ -3,6 +3,7 @@
 #include "Cell.h"
 
 class Ship
+
 {
 private:
     std::vector<Cell*> cells;  // клетки, которые занимает корабль

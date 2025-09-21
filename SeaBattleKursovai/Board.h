@@ -4,6 +4,7 @@
 #include "Ship.h"
 
 class Board
+
 {
 private:
     int rows, cols;

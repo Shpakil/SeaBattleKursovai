@@ -92,6 +92,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Board.cpp" />
+    <ClCompile Include="Player.cpp" />
+    <ClCompile Include="Ship.cpp" />
     <QtRcc Include="SeaBattleKursovai.qrc" />
     <QtUic Include="SeaBattleKursovai.ui" />
     <ClCompile Include="Cell.cpp" />
@@ -99,8 +102,11 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Board.h" />
     <ClInclude Include="Cell.h" />
+    <ClInclude Include="Player.h" />
     <ClInclude Include="SeaBattleKursovai.h" />
+    <ClInclude Include="Ship.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

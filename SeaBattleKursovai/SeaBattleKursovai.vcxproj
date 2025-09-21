@@ -94,6 +94,8 @@
   <ItemGroup>
     <ClCompile Include="Board.cpp" />
     <ClCompile Include="ComputerPlayer.cpp" />
+    <ClCompile Include="Game.cpp" />
+    <ClCompile Include="GameLogic.cpp" />
     <ClCompile Include="HumanPlayer.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Ship.cpp" />
@@ -107,6 +109,8 @@
     <ClInclude Include="Board.h" />
     <ClInclude Include="Cell.h" />
     <ClInclude Include="ComputerPlayer.h" />
+    <QtMoc Include="Game.h" />
+    <ClInclude Include="GameLogic.h" />
     <ClInclude Include="HumanPlayer.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="SeaBattleKursovai.h" />

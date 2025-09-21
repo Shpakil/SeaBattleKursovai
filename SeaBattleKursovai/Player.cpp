@@ -19,6 +19,6 @@ const std::string& Player::getName() const
 bool Player::hasLost() const
 {
     // ѕровер€ем, остались ли живые корабли
-    return board.allShipsSunk();  // предполагаетс€, что GameBoard умеет провер€ть это
+    return board.allShipsSunk();  
 }
 

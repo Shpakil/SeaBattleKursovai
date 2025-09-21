@@ -35,9 +35,6 @@
     <QtUic Include="SeaBattleKursovai.ui">
       <Filter>Form Files</Filter>
     </QtUic>
-    <QtMoc Include="SeaBattleKursovai.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
     <ClCompile Include="SeaBattleKursovai.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -46,69 +43,16 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="cell.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ship.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="board.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="gamestate.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="gameobserver.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="player.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="humanplayer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="aiplayer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="game.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="gamefactory.cpp">
+    <ClCompile Include="Cell.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="cell.h">
+    <ClInclude Include="SeaBattleKursovai.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ship.h">
+    <ClInclude Include="Cell.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="board.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="gamefactory.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <QtMoc Include="gameobserver.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="gamestate.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="game.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="aiplayer.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="humanplayer.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="player.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
   </ItemGroup>
 </Project>

@@ -1,39 +1,66 @@
-#include "cell.h"
-#include "ship.h"
+#include "Cell.h"
 
-Cell::Cell()
-    : m_state(Empty)
-    , m_ship(nullptr)
+// Конструктор
+Cell::Cell(int r, int c)
+    : row(r), col(c), state(CellState::Empty)
 {
 }
 
-Cell::State Cell::state() const
+// Геттеры
+int Cell::getRow() const
 {
-    return m_state;
+    return row;
 }
 
-void Cell::setState(State state)
+int Cell::getCol() const
 {
-    m_state = state;
+    return col;
+}
+
+CellState Cell::getState() const
+{
+    return state;
+}
+
+// Сеттер
+void Cell::setState(CellState s)
+{
+    state = s;
+}
+
+// Проверки
+bool Cell::isEmpty() const
+{
+    return state == CellState::Empty;
 }
 
 bool Cell::hasShip() const
 {
-    return m_state == Ship || m_state == Hit || m_state == Destroyed;
+    return state == CellState::Ship;
 }
 
-Ship* Cell::ship() const
+bool Cell::isHit() const
 {
-    return m_ship;
+    return state == CellState::Hit;
 }
 
-void Cell::setShip(Ship* ship)
+bool Cell::isMiss() const
 {
-    m_ship = ship;
-    if (ship) {
-        m_state = Ship;
+    return state == CellState::Miss;
+}
+
+// "Выстрел по клетке"
+bool Cell::shoot()
+{
+    if (state == CellState::Ship)
+    {
+        state = CellState::Hit;
+        return true; // попадание
     }
-    else {
-        m_state = Empty;
+    if (state == CellState::Empty)
+    {
+        state = CellState::Miss;
+        return false; // промах
     }
+    return false; // повторный выстрел
 }

@@ -1,31 +1,42 @@
-#ifndef CELL_H  
-#define CELL_H  
-#include "ship.h"  
-class Ship; // Forward declaration of Ship class  
+#pragma once
+#include <iostream>
 
-class Cell  
-{  
-public:  
-   enum State {  
-       Empty,      // Пустая клетка  
-       ShipState,  // Renamed to avoid conflict with Ship class  
-       Hit,        // Попадание  
-       Miss,       // Промах  
-       Destroyed   // Уничтоженный корабль  
-   };  
+// Состояние клетки
+enum class CellState
+{
+    Empty,
+    Ship,
+    Hit,
+    Miss
+};
 
-   Cell();  
+class Cell
+{
+private:
+    int row;
+    int col;
+    CellState state;
 
-   State state() const;  
-   void setState(State state);  
+public:
+    // Конструктор
+    Cell(int r = 0, int c = 0);
 
-   bool hasShip() const;  
-   Ship* ship() const;  
-   void setShip(Ship* ship);  
+    // Геттеры
+    int getRow() const;
+    int getCol() const;
+    CellState getState() const;
 
-private:  
-   State m_state;  
-   Ship* m_ship;  
-};  
+    // Сеттер
+    void setState(CellState s);
 
-#endif // CELL_H
+    // Проверки
+    bool isEmpty() const;
+    bool hasShip() const;
+    bool isHit() const;
+    bool isMiss() const;
+
+    // "Выстрел по клетке"
+    bool shoot();
+};
+
+

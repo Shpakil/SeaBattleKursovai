@@ -6,11 +6,11 @@
 #include "ComputerPlayer.h"
 
 enum class GamePhase {
-    ShipPlacement,      // Player placing ships
-    ComputerPlacement,  // Computer placing ships
-    PlayerTurn,         // Player's attack turn
-    ComputerTurn,       // Computer's attack turn
-    GameOver           // Game finished
+    ShipPlacement,
+    ComputerPlacement,
+    PlayerTurn,
+    ComputerTurn,
+    GameOver
 };
 
 class Game : public QObject

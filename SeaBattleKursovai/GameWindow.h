@@ -17,6 +17,7 @@ private slots:
     void onGameStateChanged();
     void onGamePhaseChanged(GamePhase newPhase);
     void onMessageReceived(const QString& message);
+    void onMoveResultReceived(const QString& result);
     void onGameFinished(const QString& winner);
 
     void onPlayerBoardLeftClick(int row, int col);
@@ -26,14 +27,16 @@ private slots:
 
 private:
     void updateBoards();
+    void updateUIState(); // Новый метод для обновления состояния UI
 
     Game* game;
     QLabel* statusLabel;
     QPushButton* newGameButton;
     BoardWidget* playerBoardWidget;
     BoardWidget* opponentBoardWidget;
-};
 
+    bool isUILocked; // Флаг блокировки UI
+};
 
 
 

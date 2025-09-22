@@ -1,6 +1,7 @@
 #include "Game.h"
 #include <QCoreApplication>
 #include <QTimer>
+#include <QDebug>
 
 Game::Game(QObject* parent)
     : QObject(parent), currentPhase(GamePhase::ShipPlacement),
@@ -20,8 +21,20 @@ Game::~Game()
     delete computerPlayer;
 }
 
+// Добавьте этот метод
+void Game::setPhase(GamePhase newPhase)
+{
+    if (currentPhase != newPhase) {
+        qDebug() << "Phase change:" << static_cast<int>(currentPhase) << "->" << static_cast<int>(newPhase);
+        currentPhase = newPhase;
+        emit gamePhaseChanged(newPhase);
+    }
+}
+
 void Game::startNewGame()
 {
+    qDebug() << "=== STARTING NEW GAME ===";
+
     delete gameLogic;
     gameLogic = nullptr;
 
@@ -29,12 +42,17 @@ void Game::startNewGame()
     computerPlayer->reset();
 
     setPhase(GamePhase::ShipPlacement);
-    emit message(humanPlayer->getCurrentShipDescription());
+    emit message("Place your ships. " + humanPlayer->getCurrentShipDescription());
 }
 
 void Game::processPlayerShipPlacement(int row, int col)
 {
-    if (currentPhase != GamePhase::ShipPlacement) return;
+    if (currentPhase != GamePhase::ShipPlacement) {
+        qDebug() << "Ship placement rejected - wrong phase:" << static_cast<int>(currentPhase);
+        return;
+    }
+
+    qDebug() << "Processing ship placement at:" << row << col;
 
     if (humanPlayer->placeShip(row, col)) {
         emit gameStateChanged();
@@ -42,7 +60,7 @@ void Game::processPlayerShipPlacement(int row, int col)
         if (humanPlayer->isPlacementComplete()) {
             emit message("All ships placed! Computer is placing its ships...");
             setPhase(GamePhase::ComputerPlacement);
-            QTimer::singleShot(500, this, &Game::executeComputerShipPlacement);
+            QTimer::singleShot(100, this, &Game::executeComputerShipPlacement);
         }
         else {
             emit message(humanPlayer->getCurrentShipDescription());
@@ -63,31 +81,58 @@ void Game::processPlayerOrientationChange()
 
 void Game::processPlayerAttack(int row, int col)
 {
-    if (currentPhase != GamePhase::PlayerTurn) return;
+    qDebug() << "=== PROCESSING PLAYER ATTACK ===";
 
-    if (!gameLogic) return;
+    if (currentPhase != GamePhase::PlayerTurn) {
+        qDebug() << "Attack rejected - wrong phase:" << static_cast<int>(currentPhase);
+        emit message("Not your turn!");
+        return;
+    }
+
+    if (!gameLogic) {
+        qDebug() << "Attack rejected - game logic not initialized";
+        emit message("Game not ready!");
+        return;
+    }
+
+    if (!gameLogic->isHumanTurn()) {
+        qDebug() << "Attack rejected - not human's turn! Current player:"
+            << gameLogic->getCurrentPlayer()->getName().c_str();
+        emit message("Wait for computer's move!");
+        return;
+    }
+
+    qDebug() << "Player attacking at:" << row << col;
 
     MoveResult result = gameLogic->executeMove(row, col);
 
+    qDebug() << "Move result:" << static_cast<int>(result);
+
     switch (result) {
     case MoveResult::Invalid:
-        emit message("Invalid move! Try a different cell.");
+        emit message("Invalid move! Choose a different cell.");
         return;
+
     case MoveResult::Miss:
-        emit moveResult("Miss!");
+        emit message("Miss! Computer's turn.");
+        setPhase(GamePhase::ComputerTurn);
+        computerActionTimer->start(1000);
         break;
+
     case MoveResult::Hit:
-        emit moveResult("Hit!");
+        emit message("Hit! Shoot again.");
         break;
+
     case MoveResult::Sink:
-        emit moveResult("You sank a ship!");
+        emit message("You sank a ship! Shoot again.");
         break;
+
     case MoveResult::GameOver:
     {
         Player* winner = gameLogic->getWinner();
         if (winner) {
             setPhase(GamePhase::GameOver);
-            emit gameFinished("Winner: " + QString::fromStdString(winner->getName()));
+            emit gameFinished("Game Over! Winner: " + QString::fromStdString(winner->getName()));
         }
         return;
     }
@@ -99,79 +144,96 @@ void Game::processPlayerAttack(int row, int col)
         Player* winner = gameLogic->getWinner();
         if (winner) {
             setPhase(GamePhase::GameOver);
-            emit gameFinished("Winner: " + QString::fromStdString(winner->getName()));
+            emit gameFinished("Game Over! Winner: " + QString::fromStdString(winner->getName()));
         }
-    }
-    else {
-        setPhase(GamePhase::ComputerTurn);
-        computerActionTimer->start(1000);
     }
 }
 
 void Game::executeComputerShipPlacement()
 {
+    qDebug() << "Computer placing ships...";
     computerPlayer->placeShips();
     startBattlePhase();
 }
 
 void Game::startBattlePhase()
 {
+    qDebug() << "=== STARTING BATTLE PHASE ===";
     gameLogic = new GameLogic(humanPlayer, computerPlayer);
     setPhase(GamePhase::PlayerTurn);
-    emit message("Computer has placed ships. Your turn! Click on opponent's board.");
+    emit message("Battle started! Your turn. Click on computer's board.");
     emit gameStateChanged();
 }
 
 void Game::executeComputerAttack()
 {
-    if (currentPhase != GamePhase::ComputerTurn || !gameLogic) return;
+    qDebug() << "=== COMPUTER ATTACK ===";
+
+    if (currentPhase != GamePhase::ComputerTurn || !gameLogic) {
+        qDebug() << "Computer attack rejected - wrong conditions";
+        return;
+    }
+
+    if (gameLogic->isHumanTurn()) {
+        qDebug() << "Computer attack rejected - it's human's turn!";
+        return;
+    }
 
     auto move = computerPlayer->makeMove();
+    qDebug() << "Computer attacking at:" << move.first << move.second;
+
     MoveResult result = gameLogic->executeMove(move.first, move.second);
+
+    QString position = QString("%1%2").arg(QChar('A' + move.second)).arg(move.first + 1);
+    QString messageText;
 
     switch (result) {
     case MoveResult::Miss:
-        emit message("Computer missed.");
+        messageText = "Computer missed at " + position;
+        setPhase(GamePhase::PlayerTurn);
+        emit message(messageText + " Your turn!");
         break;
+
     case MoveResult::Hit:
-        emit message("Computer hit your ship!");
+        messageText = "Computer hit your ship at " + position;
+        emit message(messageText);
         break;
+
     case MoveResult::Sink:
-        emit message("Computer sank your ship!");
+        messageText = "Computer sank your ship at " + position;
+        emit message(messageText);
         break;
+
     case MoveResult::GameOver:
     {
         Player* winner = gameLogic->getWinner();
         if (winner) {
             setPhase(GamePhase::GameOver);
-            emit gameFinished("Winner: " + QString::fromStdString(winner->getName()));
+            emit gameFinished("Game Over! Winner: " + QString::fromStdString(winner->getName()));
         }
         return;
     }
     default:
-        break;
+        messageText = "Computer made a move";
     }
 
+    emit message(messageText);
     emit gameStateChanged();
+
+    if (result == MoveResult::Miss) {
+        qDebug() << "Computer missed - returning turn to human";
+    }
+    else {
+        qDebug() << "Computer hit - shooting again";
+        computerActionTimer->start(1000);
+    }
 
     if (gameLogic->isGameOver()) {
         Player* winner = gameLogic->getWinner();
         if (winner) {
             setPhase(GamePhase::GameOver);
-            emit gameFinished("Winner: " + QString::fromStdString(winner->getName()));
+            emit gameFinished("Game Over! Winner: " + QString::fromStdString(winner->getName()));
         }
-    }
-    else {
-        setPhase(GamePhase::PlayerTurn);
-        emit message("Your turn! Select a cell on opponent's board.");
-    }
-}
-
-void Game::setPhase(GamePhase newPhase)
-{
-    if (currentPhase != newPhase) {
-        currentPhase = newPhase;
-        emit gamePhaseChanged(newPhase);
     }
 }
 
@@ -199,13 +261,13 @@ QString Game::getGameStatus() const
     case GamePhase::ComputerPlacement:
         return "Computer is placing ships...";
     case GamePhase::PlayerTurn:
-        return "Your turn!";
+        return "Your turn - attack computer!";
     case GamePhase::ComputerTurn:
         return "Computer's turn...";
     case GamePhase::GameOver:
         return "Game Over!";
     default:
-        return "Unknown state";
+        return "Unknown";
     }
 }
 

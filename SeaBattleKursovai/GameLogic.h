@@ -14,20 +14,23 @@ enum class MoveResult {
 class GameLogic
 {
 private:
-    Player* player1;
-    Player* player2;
-    Player* currentPlayer;
-    Player* opponentPlayer;
+    Player* humanPlayer;
+    Player* computerPlayer;
+    Player* currentPlayer;    // Тот, кто сейчас ходит
+    Player* opponentPlayer;   // Тот, в кого стреляют
 
 public:
-    GameLogic(Player* p1, Player* p2);
+    GameLogic(Player* human, Player* computer);
 
+    // Core game logic
     bool isValidMove(int row, int col) const;
     MoveResult executeMove(int row, int col);
     bool isGameOver() const;
     Player* getWinner() const;
     Player* getCurrentPlayer() const { return currentPlayer; }
+    Player* getOpponentPlayer() const { return opponentPlayer; }
     void switchTurns();
 
-    const Board& getPlayerBoard(Player* player) const;
+    // Helper methods
+    bool isHumanTurn() const { return currentPlayer == humanPlayer; }
 };

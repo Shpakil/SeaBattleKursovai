@@ -10,15 +10,15 @@ private:
     std::vector<std::vector<Cell>> grid;
     std::vector<Ship> ships;
 
+    
+    
+
 public:
     Board(int r = 10, int c = 10);
 
-    // Не константная версия (для изменения клеток)
     Cell& getCell(int row, int col);
-
-    // Константная версия (для чтения)
     const Cell& getCell(int row, int col) const;
-
+    bool isAreaClear(int row, int col) const;
     bool placeShip(const std::vector<Cell*>& shipCells);
     bool shootAt(int row, int col);
     bool allShipsSunk() const;
@@ -26,5 +26,4 @@ public:
     std::vector<std::vector<int>> getStateGrid() const;
     const std::vector<Ship>& getShips() const { return ships; }
 };
-
 

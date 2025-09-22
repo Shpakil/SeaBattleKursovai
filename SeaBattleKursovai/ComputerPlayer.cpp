@@ -27,6 +27,52 @@ void ComputerPlayer::generateAvailableMoves()
     }
 }
 
+bool ComputerPlayer::isValidPlacement(int row, int col, int size, ShipOrientation orientation) const
+{
+    // Проверяем границы доски
+    if (orientation == ShipOrientation::Horizontal) {
+        if (col + size > 10) return false;
+    }
+    else {
+        if (row + size > 10) return false;
+    }
+
+    // Проверяем каждую клетку корабля и область вокруг
+    for (int i = 0; i < size; ++i) {
+        int r = row + (orientation == ShipOrientation::Vertical ? i : 0);
+        int c = col + (orientation == ShipOrientation::Horizontal ? i : 0);
+
+        if (r >= 10 || c >= 10) return false;
+
+        const Cell& cell = getBoard().getCell(r, c);
+
+        // Клетка должна быть пустой
+        if (!cell.isEmpty()) return false;
+
+        // Вокруг клетки не должно быть кораблей
+        if (!getBoard().isAreaClear(r, c)) return false;
+    }
+
+    return true;
+}
+
+bool ComputerPlayer::tryPlaceShip(int startRow, int startCol, int size, ShipOrientation orientation)
+{
+    std::vector<Cell*> shipCells;
+
+    for (int i = 0; i < size; ++i) {
+        int r = startRow + (orientation == ShipOrientation::Vertical ? i : 0);
+        int c = startCol + (orientation == ShipOrientation::Horizontal ? i : 0);
+
+        if (r >= 10 || c >= 10) return false;
+
+        Cell& cell = getBoard().getCell(r, c);
+        shipCells.push_back(&cell);
+    }
+
+    return getBoard().placeShip(shipCells);
+}
+
 void ComputerPlayer::placeShips()
 {
     std::vector<int> shipSizes = { 4, 3, 3, 2, 2, 2, 1, 1, 1, 1 };
@@ -55,61 +101,15 @@ void ComputerPlayer::placeShips()
     std::cout << "Computer finished placing ships" << std::endl;
 }
 
-bool ComputerPlayer::isValidPlacement(int row, int col, int size, ShipOrientation orientation) const
-{
-    // Проверяем границы доски
-    if (orientation == ShipOrientation::Horizontal) {
-        if (col + size > 10) return false;
-    }
-    else {
-        if (row + size > 10) return false;
-    }
-
-    // Проверяем клетки и окружающее пространство
-    for (int i = -1; i <= size; ++i) {
-        for (int j = -1; j <= 1; ++j) {
-            int r = row + (orientation == ShipOrientation::Vertical ? i : j);
-            int c = col + (orientation == ShipOrientation::Horizontal ? i : j);
-
-            if (r >= 0 && r < 10 && c >= 0 && c < 10) {
-                const Cell& cell = getBoard().getCell(r, c);
-                if (!cell.isEmpty()) return false;
-            }
-        }
-    }
-
-    return true;
-}
-
-bool ComputerPlayer::tryPlaceShip(int startRow, int startCol, int size, ShipOrientation orientation)
-{
-    std::vector<Cell*> shipCells;
-
-    // Собираем клетки для корабля
-    for (int i = 0; i < size; ++i) {
-        int r = startRow + (orientation == ShipOrientation::Vertical ? i : 0);
-        int c = startCol + (orientation == ShipOrientation::Horizontal ? i : 0);
-
-        if (r >= 10 || c >= 10) return false;
-
-        Cell& cell = getBoard().getCell(r, c);
-        shipCells.push_back(&cell);
-    }
-
-    // Пытаемся разместить корабль
-    return getBoard().placeShip(shipCells);
-}
-
 std::pair<int, int> ComputerPlayer::makeMove()
 {
     if (availableMoves.empty()) {
-        generateAvailableMoves(); // Регенерируем ходы, если закончились
+        generateAvailableMoves();
     }
 
     int index = rand() % availableMoves.size();
     auto move = availableMoves[index];
     availableMoves.erase(availableMoves.begin() + index);
 
-    std::cout << "Computer attacks: (" << move.first << ", " << move.second << ")" << std::endl;
     return move;
 }

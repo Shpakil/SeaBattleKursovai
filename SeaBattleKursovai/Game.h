@@ -1,27 +1,55 @@
 #pragma once
-
 #include <QObject>
-#include <QString>
+#include <QTimer>
 #include "GameLogic.h"
+#include "HumanPlayer.h"
+#include "ComputerPlayer.h"
 
-//  ласс Game управл€ет процессом и общаетс€ с UI через сигналы
+enum class GamePhase {
+    ShipPlacement,      // Player placing ships
+    ComputerPlacement,  // Computer placing ships
+    PlayerTurn,         // Player's attack turn
+    ComputerTurn,       // Computer's attack turn
+    GameOver           // Game finished
+};
+
 class Game : public QObject
 {
     Q_OBJECT
-
-private:
-    GameLogic* logic;  // Ћогика игры
 
 public:
     explicit Game(QObject* parent = nullptr);
     ~Game();
 
-    void newGame(Player* p1, Player* p2);   // запуск новой игры
-    void processMove(int row, int col);     // обработка хода игрока
+    void startNewGame();
+    void processPlayerShipPlacement(int row, int col);
+    void processPlayerOrientationChange();
+    void processPlayerAttack(int row, int col);
+
+    GamePhase getCurrentPhase() const { return currentPhase; }
+    QString getGameStatus() const;
+    std::vector<std::vector<int>> getPlayerBoardState() const;
+    std::vector<std::vector<int>> getOpponentBoardState() const;
 
 signals:
-    void moveResult(const QString& msg);    // сообщение дл€ UI ("ѕопадание!" / "ћимо!")
-    void boardUpdated();                    // сигнал дл€ перерисовки доски
-    void gameOver(const QString& winner);   // сигнал при завершении игры
+    void gameStateChanged();
+    void gamePhaseChanged(GamePhase newPhase);
+    void message(const QString& text);
+    void moveResult(const QString& result);
+    void gameFinished(const QString& winner);
+
+private slots:
+    void executeComputerShipPlacement();
+    void executeComputerAttack();
+
+private:
+    void setPhase(GamePhase newPhase);
+    void startBattlePhase();
+
+    GamePhase currentPhase;
+    HumanPlayer* humanPlayer;
+    ComputerPlayer* computerPlayer;
+    GameLogic* gameLogic;
+    QTimer* computerActionTimer;
 };
 

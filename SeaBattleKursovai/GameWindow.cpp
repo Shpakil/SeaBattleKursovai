@@ -1,71 +1,104 @@
 #include "GameWindow.h"
+#include <QVBoxLayout>
+#include <QHBoxLayout>
 
 GameWindow::GameWindow(QWidget* parent)
     : QWidget(parent)
 {
-    // --- Создание интерфейса ---
+    setMinimumSize(800, 600);
+    resize(1000, 700);
+
+    // Создаем UI
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
 
-    infoLabel = new QLabel("New Game!", this);   // Сообщение на английском
-    infoLabel->setWordWrap(true);               // Разрешаем перенос строк
-    mainLayout->addWidget(infoLabel);
+    statusLabel = new QLabel("Welcome", this);
+    mainLayout->addWidget(statusLabel);
 
-    boardWidget = new BoardWidget(this);
-    mainLayout->addWidget(boardWidget);
+    QHBoxLayout* boardsLayout = new QHBoxLayout();
+    playerBoardWidget = new BoardWidget(this);
+    opponentBoardWidget = new BoardWidget(this);
+    boardsLayout->addWidget(playerBoardWidget, 1);
+    boardsLayout->addWidget(opponentBoardWidget, 1);
+    mainLayout->addLayout(boardsLayout);
 
-    newGameButton = new QPushButton("New Game", this);
+    newGameButton = new QPushButton("New game", this);
     mainLayout->addWidget(newGameButton);
 
-    // --- Создание игроков и игры ---
-    player1 = new HumanPlayer("Player 1");
-    player2 = new ComputerPlayer("Computer");
+    // Создаем игровую логику
     game = new Game(this);
-    game->newGame(player1, player2);
 
-    // --- Подключение сигналов ---
-    connect(boardWidget, &BoardWidget::cellClicked, this, &GameWindow::handleCellClicked);
-    connect(game, &Game::moveResult, this, &GameWindow::showMoveResult);
-    connect(game, &Game::boardUpdated, this, &GameWindow::updateBoard);
-    connect(game, &Game::gameOver, this, &GameWindow::showGameOver);
+    // Подключаем сигналы
+    connect(game, &Game::gameStateChanged, this, &GameWindow::onGameStateChanged);
+    connect(game, &Game::gamePhaseChanged, this, &GameWindow::onGamePhaseChanged);
+    connect(game, &Game::message, this, &GameWindow::onMessageReceived);
+    connect(game, &Game::gameFinished, this, &GameWindow::onGameFinished);
 
-    connect(newGameButton, &QPushButton::clicked, [=]() {
-        game->newGame(player1, player2);
-        infoLabel->setText("New Game!");  // Сброс текста
-        updateBoard();
-    });
+    connect(playerBoardWidget, &BoardWidget::cellClicked,
+        this, &GameWindow::onPlayerBoardLeftClick);
+    connect(playerBoardWidget, &BoardWidget::rightClick,
+        this, &GameWindow::onPlayerBoardRightClick);
+    connect(opponentBoardWidget, &BoardWidget::cellClicked,
+        this, &GameWindow::onOpponentBoardClick);
 
-    updateBoard(); // Начальная отрисовка доски
+    connect(newGameButton, &QPushButton::clicked, this, &GameWindow::onNewGameClicked);
+
+    // Начинаем новую игру
+    onNewGameClicked();
 }
 
 GameWindow::~GameWindow()
 {
     delete game;
-    delete player1;
-    delete player2;
 }
 
-// --- Обработка клика по клетке ---
-void GameWindow::handleCellClicked(int row, int col)
+void GameWindow::onNewGameClicked()
 {
-    game->processMove(row, col);
+    game->startNewGame();
+    updateBoards();
 }
 
-// --- Обновление доски ---
-void GameWindow::updateBoard()
+void GameWindow::onGameStateChanged()
 {
-    std::vector<std::vector<int>> state = player1->getBoard().getStateGrid();
-    boardWidget->setBoardState(state);
+    updateBoards();
 }
 
-// --- Показ сообщений о ходе ---
-void GameWindow::showMoveResult(const QString& msg)
+void GameWindow::onGamePhaseChanged(GamePhase newPhase)
 {
-    infoLabel->setText(msg);
+    // Можно изменить внешний вид в зависимости от фазы
+    updateBoards();
 }
 
-// --- Показ сообщения о победителе ---
-void GameWindow::showGameOver(const QString& winner)
+void GameWindow::onMessageReceived(const QString& message)
 {
-    infoLabel->setText("Winner: " + winner);
+    statusLabel->setText(message);
 }
+
+void GameWindow::onGameFinished(const QString& winner)
+{
+    statusLabel->setText(winner);
+}
+
+void GameWindow::onPlayerBoardLeftClick(int row, int col)
+{
+    game->processPlayerShipPlacement(row, col);
+}
+
+void GameWindow::onPlayerBoardRightClick(int row, int col)
+{
+    game->processPlayerOrientationChange();
+}
+
+void GameWindow::onOpponentBoardClick(int row, int col)
+{
+    game->processPlayerAttack(row, col);
+}
+
+void GameWindow::updateBoards()
+{
+    playerBoardWidget->setBoardState(game->getPlayerBoardState());
+    opponentBoardWidget->setBoardState(game->getOpponentBoardState());
+}
+
+
+
 

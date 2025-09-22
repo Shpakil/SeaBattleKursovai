@@ -4,33 +4,27 @@
 #include "Ship.h"
 
 class Board
-
 {
 private:
     int rows, cols;
-    std::vector<std::vector<Cell>> grid;  // сетка клеток
-    std::vector<Ship> ships;              // корабли на поле
+    std::vector<std::vector<Cell>> grid;
+    std::vector<Ship> ships;
 
 public:
-    Board(int r = 10, int c = 10);        // конструктор с размерами
+    Board(int r = 10, int c = 10);
 
-    // Получить клетку по координатам
+    // Не константная версия (для изменения клеток)
     Cell& getCell(int row, int col);
 
-    // Расстановка корабля (передаём указатели на клетки)
+    // Константная версия (для чтения)
+    const Cell& getCell(int row, int col) const;
+
     bool placeShip(const std::vector<Cell*>& shipCells);
-
-    // Выстрел по клетке
     bool shootAt(int row, int col);
-
-    // Проверка, потоплены ли все корабли
     bool allShipsSunk() const;
-
-    // Получить сетку (для UI)
     const std::vector<std::vector<Cell>>& getGrid() const;
-
     std::vector<std::vector<int>> getStateGrid() const;
-
+    const std::vector<Ship>& getShips() const { return ships; }
 };
 
 

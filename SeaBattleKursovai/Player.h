@@ -1,28 +1,27 @@
 #pragma once
 #include <string>
-#include <utility>   // для std::pair
-#include "Board.h"  
+#include <utility>
+#include "Board.h"
+#include "ShipOrientation.h"
 
 class Player
 {
 protected:
-
-    std::string name;   // имя игрока
-    Board board;    // игровое поле игрока
+    std::string name;
+    Board board;
 
 public:
     Player(const std::string& playerName);
-
     virtual ~Player() = default;
 
-    // Чисто виртуальные методы
-    virtual void placeShips() = 0;                     // расстановка кораблей
-    virtual std::pair<int, int> makeMove() = 0;        // выбор клетки для выстрела
+    virtual void placeShips() = 0;
+    virtual std::pair<int, int> makeMove() = 0;
+    virtual void reset();
 
-    // Общие методы
-    Board& getBoard();                             // получить ссылку на поле
-    const std::string& getName() const;               // имя игрока
-    bool hasLost() const;                              // проверка потопления всех кораблей
+    Board& getBoard();
+    const Board& getBoard() const;
+    const std::string& getName() const;
+    bool hasLost() const;
 };
 
 

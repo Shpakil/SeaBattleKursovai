@@ -1,18 +1,32 @@
 #pragma once
 #include "Player.h"
-#include <utility>  // для std::pair
+#include "ShipPlacer.h"
+#include <utility>
 #include <string>
+#include <QString>
 
 class HumanPlayer : public Player
 {
-public:
-    HumanPlayer(const std::string& n);
+private:
+    ShipPlacer shipPlacer;
+    std::pair<int, int> nextMove;
+    bool moveReady;
 
-    // Расставляет корабли вручную (позже будет UI)
+public:
+    HumanPlayer(const std::string& n = "Player");
+
+    void reset() override;
     void placeShips() override;
 
-    // Делает ход (координаты будут передаваться из UI)
+    bool placeShip(int row, int col);
+    void toggleOrientation();
+    bool isPlacementComplete() const;
+    QString getCurrentShipDescription() const;
+
     std::pair<int, int> makeMove() override;
+    void setNextMove(int row, int col);
 };
+
+
 
 

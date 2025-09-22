@@ -1,27 +1,34 @@
 #pragma once
-
 #include <QWidget>
 #include <vector>
+#include <QMouseEvent>
+
+const int GRID_SIZE = 10; // ƒобавл€ем константу размера сетки
 
 class BoardWidget : public QWidget
 {
     Q_OBJECT
-
-private:
-    static const int GRID_SIZE = 10;   // размер доски 10x10
-    int cellSize;                       // размер одной клетки
-    std::vector<std::vector<int>> boardState; // 0 = пусто, 1 = корабль, 2 = промах, 3 = попадание
-
 public:
     explicit BoardWidget(QWidget* parent = nullptr);
 
-    void setBoardState(const std::vector<std::vector<int>>& state); // обновление состо€ни€ доски
+    // ƒобавл€ем объ€вление метода
+    void setBoardState(const std::vector<std::vector<int>>& state);
 
 signals:
-    void cellClicked(int row, int col); // сигнал при клике на клетку
+    void cellClicked(int row, int col);
+    void rightClick(int row, int col);
 
 protected:
-    void paintEvent(QPaintEvent* event) override;
+    void paintEvent(QPaintEvent* event) override; // ƒобавл€ем override
     void mousePressEvent(QMouseEvent* event) override;
-};
 
+private:
+    int cellSize;
+    int margin;
+    std::vector<std::vector<int>> boardState;
+
+    // ƒобавл€ем объ€влени€ приватных методов
+    void drawGrid(QPainter& painter);
+    void drawCells(QPainter& painter);
+    void drawLabels(QPainter& painter);
+};

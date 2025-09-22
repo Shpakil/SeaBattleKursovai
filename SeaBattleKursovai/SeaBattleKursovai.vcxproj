@@ -101,6 +101,8 @@
     <ClCompile Include="HumanPlayer.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Ship.cpp" />
+    <ClCompile Include="ShipOrientation.cpp" />
+    <ClCompile Include="ShipPlacer.cpp" />
     <QtRcc Include="SeaBattleKursovai.qrc" />
     <QtUic Include="SeaBattleKursovai.ui" />
     <ClCompile Include="Cell.cpp" />
@@ -108,6 +110,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Board.h" />
+    <ClInclude Include="ShipOrientation.h" />
+    <ClInclude Include="ShipPlacer.h" />
     <QtMoc Include="BoardWidget.h" />
     <ClInclude Include="Cell.h" />
     <ClInclude Include="ComputerPlayer.h" />

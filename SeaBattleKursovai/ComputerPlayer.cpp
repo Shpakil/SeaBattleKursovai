@@ -8,7 +8,7 @@
 ComputerPlayer::ComputerPlayer(const std::string& n)
     : Player(n), currentMode(AIMode::Search),
     suspectedOrientation(ShipOrientation::Horizontal),
-    orientationConfirmed(false)
+    orientationConfirmed(false), currentDirection(-1), needToSwitchDirection(false)
 {
     std::srand(static_cast<unsigned>(std::time(nullptr)));
     reset();
@@ -29,6 +29,16 @@ void ComputerPlayer::clearHuntState()
     while (!huntMoves.empty()) huntMoves.pop();
     suspectedOrientation = ShipOrientation::Horizontal;
     orientationConfirmed = false;
+    resetDirectionTracking();
+}
+
+void ComputerPlayer::resetDirectionTracking()
+{
+    currentDirection = -1;
+    needToSwitchDirection = false;
+    for (int i = 0; i < 4; i++) {
+        directionTested[i] = false;
+    }
 }
 
 void ComputerPlayer::generateAvailableMoves()
@@ -47,32 +57,24 @@ void ComputerPlayer::removeMoveFromAvailable(int row, int col)
         std::make_pair(row, col));
     if (it != availableMoves.end()) {
         availableMoves.erase(it);
-        qDebug() << "Removed move from available: (" << row << ", " << col << ")";
     }
 }
 
-// НОВЫЙ МЕТОД: Синхронизация доступных ходов с состоянием доски
 void ComputerPlayer::syncAvailableMovesWithBoard(const Board& opponentBoard)
 {
-    // Создаем временный список валидных ходов
     std::vector<std::pair<int, int>> validMoves;
 
     for (const auto& move : availableMoves) {
         int row = move.first;
         int col = move.second;
 
-        // Проверяем, что по этой клетке еще не стреляли
         const Cell& cell = opponentBoard.getCell(row, col);
         if (!cell.isHit() && !cell.isMiss()) {
             validMoves.push_back(move);
         }
-        else {
-            qDebug() << "Syncing: Removing already shot cell (" << row << ", " << col << ")";
-        }
     }
 
     availableMoves = validMoves;
-    qDebug() << "Available moves after sync:" << availableMoves.size();
 }
 
 bool ComputerPlayer::tryPlaceShip(int startRow, int startCol, int size, ShipOrientation orientation)
@@ -138,7 +140,6 @@ std::pair<int, int> ComputerPlayer::makeMove()
         move = makeSearchMove();
     }
 
-    // Удаляем ход из доступных
     removeMoveFromAvailable(move.first, move.second);
 
     qDebug() << "Computer attacks: (" << move.first << ", " << move.second << ")";
@@ -170,30 +171,25 @@ std::pair<int, int> ComputerPlayer::makeHuntMove()
             return move;
         }
         else {
-            qDebug() << "Removing invalid hunt move:" << frontMove.first << frontMove.second;
             huntMoves.pop();
         }
     }
 
-    // Если очередь пуста, но мы в режиме охоты, генерируем новые ходы
+    // Если очередь пуста, генерируем новые ходы
     if (currentMode == AIMode::Hunt) {
-        qDebug() << "Hunt queue empty, generating new moves around last hit: ("
-            << lastHit.first << ", " << lastHit.second << ")";
+        qDebug() << "Hunt queue empty, generating new moves";
 
         if (orientationConfirmed) {
-            generateTargetedHuntMoves();
+            generateDirectionalHuntMoves();
         }
         else {
             generateHuntMoves(lastHit.first, lastHit.second);
         }
 
-        // Пытаемся снова получить ход
         if (!huntMoves.empty()) {
             return makeHuntMove();
         }
 
-        // Если не удалось сгенерировать ходы, но корабль еще не добит,
-        // используем поисковый ход, но остаемся в режиме охоты
         qDebug() << "No hunt moves generated, using search move but staying in HUNT mode";
     }
 
@@ -215,19 +211,21 @@ void ComputerPlayer::generateHuntMoves(int hitRow, int hitCol)
     qDebug() << "Generating hunt moves around hit at:" << hitRow << hitCol;
 
     std::vector<std::pair<int, int>> directions = {
-        {-1, 0}, {1, 0}, {0, -1}, {0, 1}
+        {-1, 0}, {1, 0}, {0, -1}, {0, 1}  // Вверх, вниз, влево, вправо
     };
 
     int validMovesAdded = 0;
 
-    for (const auto& dir : directions) {
-        int newRow = hitRow + dir.first;
-        int newCol = hitCol + dir.second;
+    for (int i = 0; i < 4; i++) {
+        if (!directionTested[i]) {
+            int newRow = hitRow + directions[i].first;
+            int newCol = hitCol + directions[i].second;
 
-        if (isValidHuntTarget(newRow, newCol)) {
-            huntMoves.push({ newRow, newCol });
-            validMovesAdded++;
-            qDebug() << "Added hunt move:" << newRow << newCol;
+            if (isValidHuntTarget(newRow, newCol)) {
+                huntMoves.push({ newRow, newCol });
+                validMovesAdded++;
+                qDebug() << "Added hunt move in direction" << i << ":" << newRow << newCol;
+            }
         }
     }
 
@@ -236,8 +234,7 @@ void ComputerPlayer::generateHuntMoves(int hitRow, int hitCol)
 
 void ComputerPlayer::generateTargetedHuntMoves()
 {
-    qDebug() << "Generating targeted hunt moves with confirmed orientation: "
-        << (suspectedOrientation == ShipOrientation::Horizontal ? "Horizontal" : "Vertical");
+    qDebug() << "Generating targeted hunt moves with confirmed orientation";
 
     if (lastHit.first == -1 || lastHit.second == -1) {
         qDebug() << "No last hit coordinates for targeted hunt";
@@ -272,6 +269,95 @@ void ComputerPlayer::generateTargetedHuntMoves()
     qDebug() << "Generated" << validMovesAdded << "valid targeted hunt moves";
 }
 
+void ComputerPlayer::generateDirectionalHuntMoves()
+{
+    qDebug() << "Generating directional hunt moves. Current direction:" << currentDirection;
+
+    if (lastHit.first == -1 || lastHit.second == -1) {
+        qDebug() << "No last hit coordinates for directional hunt";
+        return;
+    }
+
+    // Если нужно сменить направление после промаха
+    if (needToSwitchDirection) {
+        qDebug() << "Switching direction after miss";
+        int newDirection = getOppositeDirection(currentDirection);
+
+        if (newDirection >= 0 && newDirection < 4 && !directionTested[newDirection]) {
+            currentDirection = newDirection;
+            directionTested[newDirection] = true;
+            needToSwitchDirection = false;
+            qDebug() << "Switched to direction:" << currentDirection;
+        }
+        else {
+            qDebug() << "Cannot switch direction, trying new direction";
+            if (!tryNewDirection()) {
+                qDebug() << "No more directions to try";
+                return;
+            }
+        }
+    }
+
+    // Если направление еще не установлено, выбираем случайное
+    if (currentDirection == -1) {
+        if (!tryNewDirection()) {
+            qDebug() << "No available directions";
+            return;
+        }
+    }
+
+    // Генерируем ход в текущем направлении
+    std::vector<std::pair<int, int>> directions = {
+        {-1, 0}, {1, 0}, {0, -1}, {0, 1}  // Вверх, вниз, влево, вправо
+    };
+
+    int newRow = lastHit.first + directions[currentDirection].first;
+    int newCol = lastHit.second + directions[currentDirection].second;
+
+    if (isValidHuntTarget(newRow, newCol)) {
+        huntMoves.push({ newRow, newCol });
+        qDebug() << "Added directional hunt move:" << newRow << newCol << "in direction" << currentDirection;
+    }
+    else {
+        qDebug() << "Directional move not valid, switching direction";
+        needToSwitchDirection = true;
+        generateDirectionalHuntMoves(); // Рекурсивно пробуем другое направление
+    }
+}
+
+int ComputerPlayer::getOppositeDirection(int direction) const
+{
+    switch (direction) {
+    case 0: return 1; // Вверх -> Вниз
+    case 1: return 0; // Вниз -> Вверх
+    case 2: return 3; // Влево -> Вправо
+    case 3: return 2; // Вправо -> Влево
+    default: return -1;
+    }
+}
+
+bool ComputerPlayer::tryNewDirection()
+{
+    std::vector<int> availableDirections;
+
+    for (int i = 0; i < 4; i++) {
+        if (!directionTested[i]) {
+            availableDirections.push_back(i);
+        }
+    }
+
+    if (availableDirections.empty()) {
+        return false;
+    }
+
+    int randomIndex = rand() % availableDirections.size();
+    currentDirection = availableDirections[randomIndex];
+    directionTested[currentDirection] = true;
+
+    qDebug() << "Trying new direction:" << currentDirection;
+    return true;
+}
+
 void ComputerPlayer::updateAIMode(int lastRow, int lastCol, bool hit, bool sink)
 {
     if (sink) {
@@ -290,14 +376,15 @@ void ComputerPlayer::updateAIMode(int lastRow, int lastCol, bool hit, bool sink)
             firstHit = { lastRow, lastCol };
             lastHit = { lastRow, lastCol };
             orientationConfirmed = false;
+            resetDirectionTracking();
             generateHuntMoves(lastRow, lastCol);
         }
         else {
             // Уже в режиме охоты - обновляем информацию
             lastHit = { lastRow, lastCol };
 
-            // Определяем ориентацию корабля
-            if (!orientationConfirmed) {
+            // Определяем ориентацию корабля по двум попаданиям
+            if (!orientationConfirmed && firstHit.first != -1) {
                 if (firstHit.first == lastHit.first) {
                     suspectedOrientation = ShipOrientation::Horizontal;
                     orientationConfirmed = true;
@@ -310,11 +397,14 @@ void ComputerPlayer::updateAIMode(int lastRow, int lastCol, bool hit, bool sink)
                 }
             }
 
-            // Очищаем очередь и генерируем целевые ходы
+            // Сбрасываем флаг смены направления после успешного попадания
+            needToSwitchDirection = false;
+
+            // Очищаем очередь и генерируем новые ходы
             while (!huntMoves.empty()) huntMoves.pop();
 
             if (orientationConfirmed) {
-                generateTargetedHuntMoves();
+                generateDirectionalHuntMoves();
             }
             else {
                 generateHuntMoves(lastHit.first, lastHit.second);
@@ -324,19 +414,20 @@ void ComputerPlayer::updateAIMode(int lastRow, int lastCol, bool hit, bool sink)
     else {
         qDebug() << "Computer MISS at:" << lastRow << lastCol;
 
-        // При промахе НЕ переключаемся в режим поиска!
         if (currentMode == AIMode::Hunt) {
-            qDebug() << "Miss in HUNT mode, continuing to hunt current ship";
+            qDebug() << "Miss in HUNT mode";
 
-            // При промахе можем попробовать сгенерировать новые ходы
-            if (huntMoves.empty()) {
-                qDebug() << "No hunt moves in queue, generating new ones";
-                if (orientationConfirmed) {
-                    generateTargetedHuntMoves();
-                }
-                else {
-                    generateHuntMoves(lastHit.first, lastHit.second);
-                }
+            // Устанавливаем флаг, что нужно сменить направление
+            needToSwitchDirection = true;
+
+            // Очищаем очередь и генерируем новые ходы в противоположном направлении
+            while (!huntMoves.empty()) huntMoves.pop();
+
+            if (orientationConfirmed) {
+                generateDirectionalHuntMoves();
+            }
+            else {
+                generateHuntMoves(lastHit.first, lastHit.second);
             }
         }
     }

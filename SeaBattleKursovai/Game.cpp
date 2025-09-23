@@ -21,7 +21,6 @@ Game::~Game()
     delete computerPlayer;
 }
 
-// Добавьте этот метод
 void Game::setPhase(GamePhase newPhase)
 {
     if (currentPhase != newPhase) {
@@ -96,8 +95,7 @@ void Game::processPlayerAttack(int row, int col)
     }
 
     if (!gameLogic->isHumanTurn()) {
-        qDebug() << "Attack rejected - not human's turn! Current player:"
-            << gameLogic->getCurrentPlayer()->getName().c_str();
+        qDebug() << "Attack rejected - not human's turn!";
         emit message("Wait for computer's move!");
         return;
     }
@@ -170,7 +168,8 @@ void Game::executeComputerAttack()
     qDebug() << "=== COMPUTER ATTACK ===";
 
     if (currentPhase != GamePhase::ComputerTurn || !gameLogic) {
-        qDebug() << "Computer attack rejected - wrong conditions";
+        qDebug() << "Computer attack rejected - wrong conditions. Phase:"
+            << static_cast<int>(currentPhase) << "GameLogic:" << (gameLogic != nullptr);
         return;
     }
 
@@ -179,29 +178,86 @@ void Game::executeComputerAttack()
         return;
     }
 
+    // Проверяем, не закончилась ли игра перед ходом компьютера
+    if (gameLogic->isGameOver()) {
+        qDebug() << "Game is already over before computer move";
+        Player* winner = gameLogic->getWinner();
+        if (winner) {
+            setPhase(GamePhase::GameOver);
+            emit gameFinished("Game Over! Winner: " + QString::fromStdString(winner->getName()));
+        }
+        return;
+    }
+
+    // ВАЖНОЕ ИСПРАВЛЕНИЕ: Синхронизируем доступные ходы компьютера с доской игрока
+    // Это удалит клетки, которые уже отмечены как промахи после потопления кораблей
+    computerPlayer->syncAvailableMovesWithBoard(humanPlayer->getBoard());
+
     auto move = computerPlayer->makeMove();
     qDebug() << "Computer attacking at:" << move.first << move.second;
 
+    // Проверяем валидность хода
+    if (move.first < 0 || move.first >= 10 || move.second < 0 || move.second >= 10) {
+        qDebug() << "Invalid computer move! Switching to player turn.";
+        setPhase(GamePhase::PlayerTurn);
+        emit message("Computer made invalid move. Your turn!");
+        return;
+    }
+
     MoveResult result = gameLogic->executeMove(move.first, move.second);
+    qDebug() << "Move result:" << static_cast<int>(result);
 
     QString position = QString("%1%2").arg(QChar('A' + move.second)).arg(move.first + 1);
     QString messageText;
 
     switch (result) {
+    case MoveResult::Invalid:
+        messageText = "Invalid move by computer at " + position;
+        qDebug() << "Computer made invalid move - switching to player turn";
+
+        // Удаляем невалидный ход из доступных
+        computerPlayer->removeMoveFromAvailable(move.first, move.second);
+
+        setPhase(GamePhase::PlayerTurn);
+        emit message(messageText + " Your turn!");
+        break;
+
     case MoveResult::Miss:
         messageText = "Computer missed at " + position;
+        computerPlayer->updateAIMode(move.first, move.second, false, false);
         setPhase(GamePhase::PlayerTurn);
         emit message(messageText + " Your turn!");
         break;
 
     case MoveResult::Hit:
         messageText = "Computer hit your ship at " + position;
+        computerPlayer->updateAIMode(move.first, move.second, true, false);
         emit message(messageText);
+        // Компьютер продолжает стрелять при попадании
+        computerActionTimer->start(1000);
         break;
 
     case MoveResult::Sink:
         messageText = "Computer sank your ship at " + position;
+        computerPlayer->updateAIMode(move.first, move.second, true, true);
         emit message(messageText);
+
+        // Синхронизируем доступные ходы после потопления корабля
+        // Это удалит клетки вокруг потопленного корабля
+        computerPlayer->syncAvailableMovesWithBoard(humanPlayer->getBoard());
+
+        // Проверяем, не закончилась ли игра после потопления корабля
+        if (gameLogic->isGameOver()) {
+            Player* winner = gameLogic->getWinner();
+            if (winner) {
+                setPhase(GamePhase::GameOver);
+                emit gameFinished("Game Over! Winner: " + QString::fromStdString(winner->getName()));
+            }
+        }
+        else {
+            // Игра продолжается - компьютер делает следующий ход
+            computerActionTimer->start(1000);
+        }
         break;
 
     case MoveResult::GameOver:
@@ -213,21 +269,11 @@ void Game::executeComputerAttack()
         }
         return;
     }
-    default:
-        messageText = "Computer made a move";
     }
 
-    emit message(messageText);
     emit gameStateChanged();
 
-    if (result == MoveResult::Miss) {
-        qDebug() << "Computer missed - returning turn to human";
-    }
-    else {
-        qDebug() << "Computer hit - shooting again";
-        computerActionTimer->start(1000);
-    }
-
+    // Дополнительная проверка окончания игры
     if (gameLogic->isGameOver()) {
         Player* winner = gameLogic->getWinner();
         if (winner) {
@@ -270,5 +316,3 @@ QString Game::getGameStatus() const
         return "Unknown";
     }
 }
-
-

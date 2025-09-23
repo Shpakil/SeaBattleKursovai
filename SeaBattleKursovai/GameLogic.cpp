@@ -3,26 +3,21 @@
 
 GameLogic::GameLogic(Player* human, Player* computer)
     : humanPlayer(human), computerPlayer(computer),
-    currentPlayer(human), opponentPlayer(computer)  // Человек ходит первым
+    currentPlayer(human), opponentPlayer(computer)
 {
     qDebug() << "GameLogic initialized. First player: Human";
 }
 
 bool GameLogic::isValidMove(int row, int col) const
 {
-    // Проверяем границы
     if (row < 0 || row >= 10 || col < 0 || col >= 10) {
-        qDebug() << "Move invalid: coordinates out of bounds";
         return false;
     }
 
-    // Проверяем, что по этой клетке еще не стреляли
     const Cell& targetCell = opponentPlayer->getBoard().getCell(row, col);
     bool valid = !targetCell.isHit() && !targetCell.isMiss();
 
-    qDebug() << "Move validation:" << (valid ? "VALID" : "INVALID")
-        << "at" << row << col
-        << "(hit:" << targetCell.isHit() << "miss:" << targetCell.isMiss() << ")";
+    qDebug() << "Move validation at" << row << col << ":" << valid;
 
     return valid;
 }
@@ -32,15 +27,12 @@ MoveResult GameLogic::executeMove(int row, int col)
     qDebug() << "=== EXECUTING MOVE ===";
     qDebug() << "Attacker:" << currentPlayer->getName().c_str();
     qDebug() << "Target:" << opponentPlayer->getName().c_str();
-    qDebug() << "Coordinates:" << row << col;
 
     if (!isValidMove(row, col)) {
-        qDebug() << "Move is invalid, aborting";
         return MoveResult::Invalid;
     }
 
     if (isGameOver()) {
-        qDebug() << "Game is over, cannot execute move";
         return MoveResult::GameOver;
     }
 
@@ -50,23 +42,38 @@ MoveResult GameLogic::executeMove(int row, int col)
 
     qDebug() << "Shot result: " << (hit ? "HIT" : "MISS");
 
-    // Проверяем, не закончилась ли игра после выстрела
     if (isGameOver()) {
-        qDebug() << "Game over after this move";
         return MoveResult::GameOver;
     }
 
     if (hit) {
-        // Проверяем, потоплен ли корабль
+        // Находим корабль, в который попали, и проверяем, потоплен ли он
         bool sankShip = false;
+        const Ship* sunkShipPtr = nullptr;
+
+        // Ищем корабль, содержащий пораженную клетку
         for (const auto& ship : opponentPlayer->getBoard().getShips()) {
-            if (ship.isSunk()) {
-                sankShip = true;
-                qDebug() << "Ship SUNK!";
-                break;
+            for (auto* shipCell : ship.getCells()) {
+                if (shipCell->getRow() == row && shipCell->getCol() == col) {
+                    // Нашли корабль - проверяем, потоплен ли он теперь
+                    if (ship.isSunk()) {
+                        sankShip = true;
+                        sunkShipPtr = &ship;
+                        qDebug() << "Ship SUNK!";
+                    }
+                    break;
+                }
             }
+            if (sankShip) break;
         }
-        return sankShip ? MoveResult::Sink : MoveResult::Hit;
+
+        if (sankShip && sunkShipPtr) {
+            // Отмечаем область вокруг потопленного корабля
+            opponentPlayer->getBoard().markAreaAroundSunkShip(*sunkShipPtr);
+            return MoveResult::Sink;
+        }
+
+        return MoveResult::Hit;
     }
     else {
         // При промахе передаем ход
@@ -81,11 +88,9 @@ bool GameLogic::isGameOver() const
     bool humanLost = humanPlayer->getBoard().allShipsSunk();
     bool computerLost = computerPlayer->getBoard().allShipsSunk();
 
-    if (humanLost || computerLost) {
-        qDebug() << "Game over - Human lost:" << humanLost << "Computer lost:" << computerLost;
-        return true;
-    }
-    return false;
+    qDebug() << "Game over check - Human lost:" << humanLost << "Computer lost:" << computerLost;
+
+    return humanLost || computerLost;
 }
 
 Player* GameLogic::getWinner() const
@@ -98,21 +103,26 @@ Player* GameLogic::getWinner() const
         qDebug() << "Winner: Human";
         return humanPlayer;
     }
+    qDebug() << "No winner yet";
     return nullptr;
 }
 
+
 void GameLogic::switchTurns()
 {
-    qDebug() << "SWITCHING TURNS:";
-    qDebug() << "Before - Current:" << currentPlayer->getName().c_str()
-        << "Opponent:" << opponentPlayer->getName().c_str();
+    qDebug() << "SWITCHING TURNS";
 
-    // Меняем игроков местами
-    Player* temp = currentPlayer;
-    currentPlayer = opponentPlayer;
-    opponentPlayer = temp;
+    if (currentPlayer == humanPlayer) {
+        currentPlayer = computerPlayer;
+        opponentPlayer = humanPlayer;
+    }
+    else {
+        currentPlayer = humanPlayer;
+        opponentPlayer = computerPlayer;
+    }
 
-    qDebug() << "After - Current:" << currentPlayer->getName().c_str()
-        << "Opponent:" << opponentPlayer->getName().c_str();
+    qDebug() << "Now current:" << currentPlayer->getName().c_str();
+    qDebug() << "Now opponent:" << opponentPlayer->getName().c_str();
 }
+
 

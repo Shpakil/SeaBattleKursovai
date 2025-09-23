@@ -16,9 +16,4 @@ bool Ship::isSunk() const
     return true;
 }
 
-// Получить клетки корабля
-const std::vector<Cell*>& Ship::getCells() const
-{
-    return cells;
-}
 

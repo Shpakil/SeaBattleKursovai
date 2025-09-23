@@ -17,7 +17,6 @@ void HumanPlayer::reset()
 void HumanPlayer::placeShips()
 {
     // Ships are placed interactively through UI clicks
-    // This method is called but ships are placed via placeShip()
 }
 
 bool HumanPlayer::placeShip(int row, int col)
@@ -27,18 +26,12 @@ bool HumanPlayer::placeShip(int row, int col)
     int shipSize = shipPlacer.getCurrentShipSize();
     ShipOrientation orientation = shipPlacer.getCurrentOrientation();
 
-    // Check if ship can be placed
-    for (int i = 0; i < shipSize; ++i) {
-        int r = row + (orientation == ShipOrientation::Vertical ? i : 0);
-        int c = col + (orientation == ShipOrientation::Horizontal ? i : 0);
-
-        if (r >= 10 || c >= 10) return false;
-
-        Cell& cell = getBoard().getCell(r, c);
-        if (!cell.isEmpty()) return false;
+    // Используем общий метод проверки из базового класса
+    if (!isValidShipPlacement(row, col, shipSize, orientation)) {
+        return false;
     }
 
-    // Place the ship
+    // Размещаем корабль
     std::vector<Cell*> shipCells;
     for (int i = 0; i < shipSize; ++i) {
         int r = row + (orientation == ShipOrientation::Vertical ? i : 0);
